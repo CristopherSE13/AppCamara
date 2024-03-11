@@ -2,6 +2,7 @@ package com.example.appcamara
 
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -34,8 +35,21 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
         }
     }
 
-    private fun compartirfoto(){
+    private fun compartirfoto() {
+        if (rutaFotoActual != "") {
+            val fotoUri = obtenerContenidoUri(File(rutaFotoActual))
+            val intentImagen = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_STREAM, fotoUri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                type = "image/jpeg"
+            }
+            val chooser = Intent.createChooser(intentImagen, "Compartir Foto")
+            if (intentImagen.resolveActivity(packageManager) != null) {
+                startActivity(chooser)
+            }
 
+        }
     }
 
     private fun tomarfoto(){
@@ -45,8 +59,9 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
                     componente ->
                 crearArchivoFoto()
                 val fotoURL: Uri =
-                    FileProvider.getUriForFile(applicationContext,"com.example.appcamara.fileprovider",file
-                    )
+                    obtenerContenidoUri(file)
+                    /*FileProvider.getUriForFile(applicationContext,"com.example.appcamara.fileprovider",file
+                    )*/
                 it.putExtra(MediaStore.EXTRA_OUTPUT,fotoURL)
             }
 
@@ -57,9 +72,10 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
         ActivityResultContracts.StartActivityForResult()){
         result ->
         if(result.resultCode == RESULT_OK){
-            val data = result.data!!
-            val imagenBitMap = data.extras!!.get("data") as Bitmap
-            binding.ivimagen.setImageBitmap(imagenBitMap)
+            //val data = result.data!!
+           // val imagenBitMap = data.extras!!.get("data") as Bitmap
+
+            binding.ivimagen.setImageBitmap(obtenerImagenBitmap())
         }
     }
     private fun crearArchivoFoto(){
@@ -68,4 +84,11 @@ class MainActivity : AppCompatActivity(),View.OnClickListener {
         rutaFotoActual = file.absolutePath
     }
 
+    private fun obtenerImagenBitmap():Bitmap{
+        return BitmapFactory.decodeFile(file.toString())
+    }
+
+    private fun obtenerContenidoUri(archivoFoto:File):Uri{
+        return FileProvider.getUriForFile(applicationContext,"com.example.appcamara.fileprovider",archivoFoto)
+    }
 }
